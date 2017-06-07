@@ -12,15 +12,14 @@ abstract class Controller {
 	protected $baseSrc;
 	protected $Url;
 
-	public function __construct(){
-		global $Perfect;
-		$this->Perfect = $Perfect;
+	public function __construct($object){
+		$this->Perfect  = $object;
 		$this->viewPath = $this->Perfect->viewPath;
-		$this->layout = $this->Perfect->config['viewConfig']['layout'];
-		$this->viewExt = $this->Perfect->config['viewConfig']['viewExt'];
-		$this->baseSrc = $this->Perfect->baseSrc;
-		$this->baseUrl = $this->Perfect->baseUrl;
-		$this->IP = new IpStore;
+		$this->layout   = $this->Perfect->config['viewConfig']['layout'];
+		$this->viewExt  = $this->Perfect->config['viewConfig']['viewExt'];
+		$this->baseSrc  = $this->Perfect->baseSrc;
+		$this->baseUrl  = $this->Perfect->baseUrl;
+		$this->IP       = new IpStore;
 		if ($this->Perfect->Router['moduleStatus']) {
 			$uri = $this->Perfect->Router['module'].'/'.$this->Perfect->Router['controller'].'/'.$this->Perfect->Router['action'];
 		}else{

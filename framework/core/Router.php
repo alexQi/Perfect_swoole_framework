@@ -7,9 +7,11 @@ class Router{
 
 	public $uri_param = array();
 	public $default_config;
+	public $Perfect;
 
-	public function __construct($router){
-		$this->default_config = $router;
+	public function __construct($obj){
+	    $this->Perfect        = $obj;
+		$this->default_config = $this->Perfect->config['router'];
 		$this->getParams();
 		$this->filterParam();
 	}
@@ -25,9 +27,9 @@ class Router{
 			$moduleStatus = false;
 		}
 		
-		if (isset($_REQUEST['r']) && trim($_REQUEST['r'])!='') 
+		if (isset($this->Perfect->get['r']) && trim($this->Perfect->get['r'])!='')
 		{
-			$param = trim($_REQUEST['r']);
+			$param = trim($this->Perfect->get['r']);
 			$tempParam = explode('/', $param);
 			
 			if ($this->default_config['enable_module']) {

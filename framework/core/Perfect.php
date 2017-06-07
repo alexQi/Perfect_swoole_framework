@@ -33,8 +33,6 @@ class Perfect {
 		if(!empty($this->config['database'])) {
 			$this->db = Mysql::getInstance($this->config['database']);
 		}
-		$Router = new Router($this->config['router']);
-		$this->Router = $Router->uri_param;
 
 		if ($this->Router['moduleStatus']) {
 			$this->viewPath = $this->config['viewConfig']['viewPath'].$this->Router['module'].DS;
@@ -42,17 +40,13 @@ class Perfect {
 			$this->viewPath = $this->config['viewConfig']['viewPath'];
 		}
 
-		$this->baseSrc = 'http://'.$_SERVER['HTTP_HOST'].substr($_SERVER['PHP_SELF'],0,strrpos($_SERVER['PHP_SELF'],'/')+1);
-		$this->baseUrl  = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
-
 		$this->Pf_Exception = new Pf_Exception;
 		$this->Pf_Exception->layout   = $this->config['viewConfig']['layout'];
-		$this->Pf_Exception->viewDir = $this->config['viewConfig']['viewPath'];
-		$this->Pf_Exception->viewExt = $this->config['viewConfig']['viewExt'];
+		$this->Pf_Exception->viewDir  = $this->config['viewConfig']['viewPath'];
+		$this->Pf_Exception->viewExt  = $this->config['viewConfig']['viewExt'];
 		$this->Pf_Exception->email    = $this->config['systemInfo']['email'];
 
-		$this->Pf_Exception->baseSrc = $this->baseSrc;
-		$this->Pf_Exception->baseUrl  = $this->baseUrl;
+		$this->Pf_Exception->baseUrl  = 'http://www.psf.com/';
 
 		$tempClassFileDirs = self::getClassFileDirs();
 		$this->classFileDirs = array_merge($tempClassFileDirs,$this->config['autoLoadDirs']);
@@ -68,6 +62,11 @@ class Perfect {
 
 	public function run(){
 		try{
+            $this->baseSrc  = 'http://'.$this->header['host'];
+            $this->baseUrl  = $this->baseSrc;
+
+            $Router = new Router($this);
+            $this->Router = $Router->uri_param;
 			if ($this->Router['moduleStatus']) {
 				$moduleName = CONTROLLER_PATH.$this->Router['module'].DS;
 				if (!is_dir($moduleName)) {
@@ -76,12 +75,12 @@ class Perfect {
 			}
 			
 			$controllerName = $this->Router['controller'].'Controller';
-			$actionName = $this->Router['action'].'Action';
+			$actionName     = $this->Router['action'].'Action';
 
 			if (!$this->Router['controller'] || !class_exists($controllerName)) {
 				throw new Pf_Exception("Not found controller , controller name : <font color='#FE8D41'>$controllerName</font>");
 			}
-			$Controller = new $controllerName;
+			$Controller = new $controllerName($this);
 			if (!method_exists($Controller, $actionName)){
 				throw new Pf_Exception("Not found this action in $controllerName , action name : <font color='#FE8D41'>$actionName</font>");
 			}

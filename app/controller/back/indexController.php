@@ -6,15 +6,11 @@ if (!defined('Perfect')) exit('Blocking access to this script');
 class indexController extends Controller {
 
 	public function indexAction(){
-		$data = array();
-		echo 1111111;
-//		$this->display('index',$data);
+		echo 'this is index action';
 	}
 
-	/**
-	 * demo
-	 */
-	public function logoutAction() {
-	}
+	public function demoAction(){
+	    echo 'this is demo action';
+    }
 
 }

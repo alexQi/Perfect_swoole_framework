@@ -5,12 +5,17 @@
  * author            : alex
  */
 
-class Server{
+class AppServer{
 
     public $serv_config;
     public $serv;
     public $fd;
     public $application;
+    public static $serve;
+    public static $get;
+    public static $post;
+    public static $header;
+    public static $server;
 
     public function __construct()
     {
@@ -31,7 +36,7 @@ class Server{
 
     public function run()
     {
-        $this->serv = new swoole_server(
+        $this->serv = new swoole_http_server(
             $this->serv_config['host'],
             $this->serv_config['port'],
             $this->serv_config['mode'],
@@ -47,52 +52,56 @@ class Server{
             'task_worker_num'=> $this->serv_config['task_num'],
         ));
 
-        $this->serv->on('Worker' , array($this, 'onWorker'));
+        $this->serv->on('Start'  , array($this, 'onStart'));
         $this->serv->on('Task'   , array($this, 'onTask'));
-        $this->serv->on('Receive', array($this, 'onReceive'));
+        $this->serv->on('Request', array($this, 'onRequest'));
         $this->serv->on('Finish' , array($this, 'onFinish'));
 
         $this->application = new Perfect();
         $this->serv->start();
     }
 
-    public function onWorker($serv,$work_id)
+    public function onStart($serv)
     {
-        echo "work start....\n";
+        $db = new Swoole\MYSQL();
+        $db->connect([
+            'host' => '127.0.0.1',
+            'port' => 3306,
+            'user' => 'root',
+            'password' => '',
+            'database' => 'mysql',
+        ],function ($db, $result) {
+            $db->query("show tables", function (Swoole\MySQL $db, $result) {
+                if ($result === false) {
+                    var_dump($db->error, $db->errno);
+                } elseif ($result === true) {
+                    var_dump($db->affected_rows, $db->insert_id);
+                } else {
+                    var_dump($result);
+                    $db->close();
+                }
+            });
+        });
+        var_dump($db);
+        $this->application->Db = $db;
     }
 
-    public function onReceive($serv,$fd,$reactor_id,$data)
-    {
-        # 处理数据
-        $argv = explode("\r\n",$data);
-        $uri  = explode(' ',$argv[0]);
-        $method       = $uri[0];
-        $paramsString = explode('?',$uri[1]);
-        if (isset($paramsString[1])){
-            $paramUri     = $paramsString[1];
-
-            $paramArray   = array();
-            foreach(explode('&',$paramUri) as $param)
-            {
-                $param = explode('=',$param);
-                $paramArray[$param[0]] = $param[1];
-            }
-        }
+    public function onRequest(\swoole_http_request $request,\swoole_http_response $response){
+        $this->application->server = isset($request->server) ? $request->server:[];
+        $this->application->header = isset($request->header) ? $request->header:[];
+        $this->application->get    = isset($request->get) ? $request->get:[];
+        $this->application->post   = isset($request->post) ? $request->post:[];
+        $this->application->serv   = $this->serv;
         ob_start();
         try{
-            echo "<pre>";
-            var_dump($_SERVER);
-//            $_REQUEST = $paramArray;
-//            $this->application->run();
+            $this->application->run();
         }catch (Exception $e){
             var_dump($e->getMessage());
         }
 
         $result = ob_get_contents();
         ob_end_clean();
-
-        $this->response($fd,$result);
-        $this->serv->close($fd);
+        $response->end($result);
     }
 
     public function onTask($serv,$task_id,$src_worker_id, $data)
@@ -104,38 +113,8 @@ class Server{
     {
         echo "$task_id task finish";
     }
-
-    /**
-     * 发送内容
-     * @param resource $serv
-     * @param int $fd
-     * @param string $respData
-     * @return void
-     */
-    public function response($fd,$respData)
-    {
-        //响应行
-        $response = array(
-            'HTTP/1.1 200',
-        );
-        //响应头
-        $headers = array(
-            'Server'=>'SwooleServer',
-            'Content-Type'=>'text/html;charset=utf8',
-            'Content-Length'=>strlen($respData),
-        );
-        foreach($headers as $key=>$val){
-            $response[] = $key.':'.$val;
-        }
-        //空行
-        $response[] = '';
-        //响应体
-        $response[] = $respData;
-        $send_data = join("\r\n",$response);
-        $this->serv->send($fd, $send_data);
-    }
 }
 
 
-$server = new Server();
-$server->run();
+$appServer = new AppServer();
+$appServer->run();

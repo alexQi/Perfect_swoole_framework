@@ -21,4 +21,20 @@ $SERV_CONFIG = array(
 //    'heartbeat_idle_time'      => 60,
 );
 
+$CONFIG['database'] = array(
+    'host'=>'127.0.0.1',
+    'port'=>'3306',
+    'username'=>'root',
+    'password'=>'ffwapokokookb....',
+    'charset'=>'utf8',
+    'db'=>'mysql',
+    'prefix'=>'pf_',
+);
+
+$CONFIG['handledRedis'] = array(
+    'host'=>'122.225.96.81',
+    'port'=>6379,
+    'passwd' =>'FFWAP_ANALYSIS_SERVER_SET_BY_YITE',
+);
+
 
